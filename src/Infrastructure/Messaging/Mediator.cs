@@ -10,31 +10,13 @@ internal class Mediator(IServiceProvider provider) : IMediator
         where TCommand : ICommand<TResult>
     {
         var handler = _provider.GetRequiredService<ICommandHandler<TCommand, TResult>>();
-
-        var behaviors = _provider.GetServices<IPipelineBehavior<TCommand, TResult>>().Reverse();
-        Func<Task<TResult>> handlerDelegate = () => handler.HandleAsync(command, cancellationToken);
-        foreach (var behavior in behaviors)
-        {
-            var next = handlerDelegate;
-            handlerDelegate = () => behavior.HandleAsync(command, next, cancellationToken);
-        }
-
-        return await handlerDelegate();
+        return await handler.HandleAsync(command, cancellationToken);
     }
 
     public async Task<TResult> SendQueryAsync<TQuery, TResult>(TQuery query, CancellationToken cancellationToken = default)
         where TQuery : IQuery<TResult>
     {
         var handler = _provider.GetRequiredService<IQueryHandler<TQuery, TResult>>();
-
-        var behaviors = _provider.GetServices<IPipelineBehavior<TQuery, TResult>>().Reverse();
-        Func<Task<TResult>> handlerDelegate = () => handler.HandleAsync(query, cancellationToken);
-        foreach (var behavior in behaviors)
-        {
-            var next = handlerDelegate;
-            handlerDelegate = () => behavior.HandleAsync(query, next, cancellationToken);
-        }
-
-        return await handlerDelegate();
+        return await handler.HandleAsync(query, cancellationToken);
     }
 }
